@@ -1,0 +1,3 @@
+[submodule "DotNetApiLogging"]
+	path = DotNetApiLogging
+	url = https://github.com/Enigma010/DotNetApiLogging
