@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
 using System.Transactions;
-using Logging;
+using DotNetApiLogging;
 
 namespace UnitOfWork
 {
