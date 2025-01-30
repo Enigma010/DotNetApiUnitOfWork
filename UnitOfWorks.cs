@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Transactions;
 using DotNetApiLogging;
 
-namespace UnitOfWork
+namespace DotNetApiUnitOfWork
 {
     /// <summary>
     /// Registers services that need to define a unit of work block that needs to either

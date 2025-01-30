@@ -1,4 +1,4 @@
-﻿namespace UnitOfWork
+﻿namespace DotNetApiUnitOfWork
 {
     public interface IUnitOfWork
     {
