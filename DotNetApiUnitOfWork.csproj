@@ -17,8 +17,4 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="DotNetApiLogging\Logging.csproj" />
-  </ItemGroup>
-
 </Project>
