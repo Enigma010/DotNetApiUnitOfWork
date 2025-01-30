@@ -18,6 +18,7 @@ namespace DotNetApiUnitOfWork
     ///     }
     /// </code>
     /// Note that the example above uses RunAsync but you could also be using Run.
+    /// Edit
     /// </summary>
     [ExcludeFromCodeCoverage(Justification = "Core infrastructure, unit tests would at a lower level")]
     public class UnitOfWorks : IDisposable
