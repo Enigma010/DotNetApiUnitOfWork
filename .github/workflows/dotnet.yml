@@ -31,4 +31,4 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Create packages
-      run: dotnet nuget push "bin/Release/DotNetApiUnitOfWork.1.0.1.nupkg" --api-key $GITHUBCFG_PAT --source "github"
+      run: dotnet nuget push "bin/Release/DotNetApiUnitOfWork.1.0.0.nupkg" --api-key $GITHUBCFG_PAT --source "github"
