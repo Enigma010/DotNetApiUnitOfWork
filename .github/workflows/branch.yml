@@ -5,9 +5,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "*" ]
 
 jobs:
   build:
@@ -30,5 +28,3 @@ jobs:
       run: dotnet publish
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: Create packages
-      run: dotnet nuget push "bin/Release/DotNetApiUnitOfWork.1.0.1.nupkg" --api-key $GITHUBCFG_PAT --source "github" --skip-duplicate

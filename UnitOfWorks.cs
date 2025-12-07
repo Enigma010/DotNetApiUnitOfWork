@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DotNetApiLogging;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Transactions;
-using DotNetApiLogging;
 
 namespace DotNetApiUnitOfWork
 {
@@ -30,21 +31,19 @@ namespace DotNetApiUnitOfWork
         public UnitOfWorks(IEnumerable<object> possibleUnitOfWorks, ILogger logger)
         {
             _logger = logger;
-            using (_logger.LogCaller())
+            _logger.LogInformationCaller($"Creating {nameof(UnitOfWorks)}");
+            possibleUnitOfWorks.ToList().ForEach(possibleUnitOfWorks =>
             {
-                possibleUnitOfWorks.ToList().ForEach(possibleUnitOfWorks =>
+                if (possibleUnitOfWorks is IUnitOfWork unitOfWork)
                 {
-                    if (possibleUnitOfWorks is IUnitOfWork unitOfWork)
-                    {
-                        string unitOfWorkType = unitOfWork.GetType().Name;
-                        _logger.LogInformation("Adding unit of work {UnitOfWorkType}", unitOfWorkType);
-                        _unitOfWorks.Add(unitOfWork);
-                        _logger.LogInformation("Beginning unit of work {UnitOfWorkType}", unitOfWorkType);
-                        unitOfWork.Begin();
-                        _logger.LogInformation("Began unit of work {UnitOfWorkType}", unitOfWorkType);
-                    }
-                });
-            }
+                    string unitOfWorkType = unitOfWork.GetType().Name;
+                    _logger.LogInformation("Adding unit of work {UnitOfWorkType}", unitOfWorkType);
+                    _unitOfWorks.Add(unitOfWork);
+                    _logger.LogInformation("Beginning unit of work {UnitOfWorkType}", unitOfWorkType);
+                    unitOfWork.Begin();
+                    _logger.LogInformation("Began unit of work {UnitOfWorkType}", unitOfWorkType);
+                }
+            });
         }
         /// <summary>
         /// Runs an action, representing the application logic, if successful commits
@@ -54,27 +53,25 @@ namespace DotNetApiUnitOfWork
         /// <returns></returns>
         public async Task Run(Action action)
         {
-            using (_logger.LogCaller())
+            _logger.LogInformationCaller($"Run {nameof(UnitOfWorks)} with action {action.ToString()}");
+            using (TransactionScope scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (TransactionScope scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    try
-                    {
-                        _logger.LogInformation("Running action");
-                        action();
-                        _logger.LogInformation("Ran action");
-                        await Commit();
-                        _logger.LogInformation("Committed");
-                        scope.Complete();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Exception encountered");
-                        _logger.LogInformation("Rolling back");
-                        await Rollback();
-                        _logger.LogInformation("Rolled back");
-                        throw;
-                    }
+                    _logger.LogInformation("Running action");
+                    action();
+                    _logger.LogInformation("Ran action");
+                    await Commit();
+                    _logger.LogInformation("Committed");
+                    scope.Complete();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Exception encountered");
+                    _logger.LogInformation("Rolling back");
+                    await Rollback();
+                    _logger.LogInformation("Rolled back");
+                    throw;
                 }
             }
         }
@@ -87,26 +84,24 @@ namespace DotNetApiUnitOfWork
         /// <returns>The application return object</returns>
         public async Task<RunReturnType> RunAsync<RunReturnType>(Func<Task<RunReturnType>> func)
         {
-            using (_logger.LogCaller())
+            _logger.LogInformationCaller($"RunAsync {nameof(UnitOfWorks)} with func {func.ToString()}");
+            using (TransactionScope scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (TransactionScope scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    try
-                    {
-                        _logger.LogInformation("Running function");
-                        var returnValue = await func();
-                        _logger.LogInformation("Ran function");
-                        await Commit();
-                        _logger.LogInformation("Committed");
-                        scope.Complete();
-                        return returnValue;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Exception encountered");
-                        await Rollback();
-                        throw;
-                    }
+                    _logger.LogInformation("Running function");
+                    var returnValue = await func();
+                    _logger.LogInformation("Ran function");
+                    await Commit();
+                    _logger.LogInformation("Committed");
+                    scope.Complete();
+                    return returnValue;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Exception encountered");
+                    await Rollback();
+                    throw;
                 }
             }
         }
@@ -117,24 +112,22 @@ namespace DotNetApiUnitOfWork
         /// <returns></returns>
         public async Task RunAsync(Func<Task> func)
         {
-            using (_logger.LogCaller())
+            _logger.LogInformationCaller($"RunAsync {nameof(UnitOfWorks)} with {func.ToString()}");
+            using (TransactionScope scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (TransactionScope scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+                try
                 {
-                    try
-                    {
-                        _logger.LogInformation("Running function");
-                        await func();
-                        _logger.LogInformation("Ran function");
-                        await Commit();
-                        _logger.LogInformation("Committed");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Exception encountered");
-                        await Rollback();
-                        throw;
-                    }
+                    _logger.LogInformation("Running function");
+                    await func();
+                    _logger.LogInformation("Ran function");
+                    await Commit();
+                    _logger.LogInformation("Committed");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Exception encountered");
+                    await Rollback();
+                    throw;
                 }
             }
         }
@@ -144,14 +137,12 @@ namespace DotNetApiUnitOfWork
         /// <returns></returns>
         public async Task Commit()
         {
-            using (_logger.LogCaller())
+            _logger.LogInformationCaller($"Commit {nameof(UnitOfWorks)}");
+            foreach (var unitOfWork in _unitOfWorks)
             {
-                foreach (var unitOfWork in _unitOfWorks)
-                {
-                    _logger.LogInformation("Committing {UnitOfWorkType}", unitOfWork.GetType().Name);
-                    await unitOfWork.Commit();
-                    _logger.LogInformation("Committed {UnitOfWorkType}", unitOfWork.GetType().Name);
-                }
+                _logger.LogInformation("Committing {UnitOfWorkType}", unitOfWork.GetType().Name);
+                await unitOfWork.Commit();
+                _logger.LogInformation("Committed {UnitOfWorkType}", unitOfWork.GetType().Name);
             }
         }
         /// <summary>
@@ -160,14 +151,12 @@ namespace DotNetApiUnitOfWork
         /// <returns></returns>
         private async Task Rollback()
         {
-            using (_logger.LogCaller())
+            _logger.LogInformationCaller($"Rollback {nameof(UnitOfWorks)}");
+            foreach (var unitOfWork in _unitOfWorks)
             {
-                foreach (var unitOfWork in _unitOfWorks)
-                {
-                    _logger.LogInformation("Rolling back {UnitOfWorkType}", unitOfWork.GetType().Name);
-                    await unitOfWork.Rollback();
-                    _logger.LogInformation("Rolled back {UnitOfWorkType}", unitOfWork.GetType().Name);
-                }
+                _logger.LogInformation("Rolling back {UnitOfWorkType}", unitOfWork.GetType().Name);
+                await unitOfWork.Rollback();
+                _logger.LogInformation("Rolled back {UnitOfWorkType}", unitOfWork.GetType().Name);
             }
         }
         /// <summary>
